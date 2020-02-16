@@ -14,7 +14,7 @@ namespace Rasterizer
 		/// </summary>
 		/// <param name="image"></param>
 		/// <returns></returns>
-		BWImage GetBWImage(Bitmap image);
+		BWImage GetBWImage(GrayscaleImage image);
 	}
 
 	/// <summary>
@@ -25,7 +25,6 @@ namespace Rasterizer
 	{
 		public byte threshold;
 		private Size size;
-		private byte[,] data;
 
 		public BurkesDitherer(byte threshold = 96)
 		{
@@ -46,21 +45,18 @@ namespace Rasterizer
 		}
 
 		private static readonly byte[] BurkesDistribution = new byte[] { 0, 8, 4, 2, 4, 8, 4, 2 };
-		
-		public BWImage GetBWImage(Bitmap image)
+
+		public BWImage GetBWImage(GrayscaleImage image)
 		{
-			size = image.Size;
+			size = image.size;
 			size.Width = (size.Width / 8) * 8;
 			BWImage output = new BWImage(size);
-			data = new byte[size.Width, size.Height];
+			var data = new byte[size.Width, size.Height];
 			for(int y = 0; y < size.Height; y++)
 			{
 				for(int x = 0; x < size.Width; x++)
 				{
-					Color c = image.GetPixel(x, y);
-					float pixelValue = (c.R * 2126 + c.G * 7152 + c.B * 0722)/2550000f;
-					float invValue = 1f - pixelValue;
-					data[x, y] = (byte)( (1 - invValue * invValue) * 255);
+					data[x, y] = (byte)image.GetValue(x, y);
 				}
 			}
 
@@ -92,7 +88,7 @@ namespace Rasterizer
 						}
 					}
 
-					output.data[x + size.Width * y] = thresholded;
+					output.data[x * size.Height + y] = thresholded;
 				}
 			}
 			return output;

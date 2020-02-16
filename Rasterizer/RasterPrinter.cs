@@ -28,11 +28,20 @@ namespace Rasterizer
 		/// <param name="inputImage"></param>
 		/// <param name="ditherer">The ditherer to be used. Use new BurkesDitherer() if unsure.</param>
 		/// <param name="rotateForLargerPrint">If true, the image will be rotated 90 degrees if that would increase the printed size.</param>
+		/// <param name="enhancers">Array of image enhancers to use - they will be applied in this order.</param>
 		/// <returns></returns>
-		public byte[] ImageToPrintCommands(Bitmap inputImage, IDitherer ditherer, bool rotateForLargerPrint = true)
+		public byte[] ImageToPrintCommands(Bitmap inputImage, IDitherer ditherer, bool rotateForLargerPrint = true, IEnhancer[] enhancers = null)
 		{
 			var resized = ScaleToFitPage(inputImage, rotateForLargerPrint);
-			BWImage result = ditherer.GetBWImage(resized);
+			var enhanced = new GrayscaleImage(resized);
+			if (enhancers != null)
+			{
+				foreach (IEnhancer enhancer in enhancers)
+				{
+					enhanced = enhancer.Enhance(enhanced);
+				}
+			}
+			BWImage result = ditherer.GetBWImage(enhanced);
 			byte[] printCommands = RasterToPrintCommands(result);
 			return printCommands;
 		}
